@@ -8,6 +8,8 @@ import (
 
 	"github.com/4ra1n/go-impacket/pkg/common"
 	"github.com/4ra1n/go-impacket/pkg/encoder"
+	"github.com/4ra1n/go-impacket/pkg/krb5/gss"
+	ntlm2 "github.com/4ra1n/go-impacket/pkg/krb5/ntlm"
 	"github.com/4ra1n/go-impacket/pkg/ms"
 	"github.com/4ra1n/go-impacket/pkg/smb"
 )
@@ -66,43 +68,54 @@ func NewNegotiateResponse() smb.SMBV1NegotiateResponseStruct {
 }
 
 // 质询请求初始化
-//func (c *Client) NewSessionSetupRequest() (smb.SMB2SessionSetupRequestStruct, error) {
-//	smb2Header := NewSMBPacket()
-//	smb2Header.Command = smb.SMB2_SESSION_SETUP
-//	smb2Header.CreditCharge = 1
-//	smb2Header.MessageId = c.GetMessageId()
-//	smb2Header.SessionId = c.GetSessionId()
-//
-//	ntlmsspneg := ntlm2.NewNegotiate(c.GetOptions().Domain, c.GetOptions().Workstation)
-//	data, err := encoder.Marshal(ntlmsspneg)
-//	if err != nil {
-//		return smb.SMB2SessionSetupRequestStruct{}, err
-//	}
-//
-//	if c.GetSessionId() != 0 {
-//		return smb.SMB2SessionSetupRequestStruct{}, errors.New("Bad session ID for session setup 1 message")
-//	}
-//
-//	// Initial session setup request
-//	init, err := gss.NewNegTokenInit()
-//	if err != nil {
-//		return smb.SMB2SessionSetupRequestStruct{}, err
-//	}
-//	init.Data.MechToken = data
-//
-//	return smb.SMB2SessionSetupRequestStruct{
-//		SMB2PacketStruct:     smb2Header,
-//		StructureSize:        25,
-//		Flags:                0x00,
-//		SecurityMode:         byte(smb.SecurityModeSigningEnabled),
-//		Capabilities:         0,
-//		Channel:              0,
-//		SecurityBufferOffset: 88,
-//		SecurityBufferLength: 0,
-//		PreviousSessionID:    0,
-//		SecurityBlob:         &init,
-//	}, nil
-//}
+func (c *Client) NewSessionSetupRequest() (smb.SMBV1SessionSetupRequestStruct, error) {
+	smbv1Header := NewSMBPacket()
+	smbv1Header.Command = smb.SMBV1_SESSION_SETUP_ANDX
+	smbv1Header.Status = 0
+	smbv1Header.Flags1 = 0x18
+	smbv1Header.Flags2 = 0x4801
+	smbv1Header.ProcessHigh = 0
+	smbv1Header.Signature = 0
+	smbv1Header.Reserved = 0
+	smbv1Header.TreeId = 0xffff
+	smbv1Header.ProcessId = 0xcb98
+	smbv1Header.UserId = 0
+	smbv1Header.MultiplexId = 0
+
+	ntlmsspneg := ntlm2.NewNegotiate(c.GetOptions().Domain, c.GetOptions().Workstation)
+	data, err := encoder.Marshal(ntlmsspneg)
+	if err != nil {
+		return smb.SMBV1SessionSetupRequestStruct{}, err
+	}
+
+	if c.GetSessionId() != 0 {
+		return smb.SMBV1SessionSetupRequestStruct{}, errors.New("bad session ID for session setup 1 message")
+	}
+
+	init, err := gss.NewNegTokenInit()
+	if err != nil {
+		return smb.SMBV1SessionSetupRequestStruct{}, err
+	}
+	init.Data.MechToken = data
+
+	return smb.SMBV1SessionSetupRequestStruct{
+		SMBV1PacketStruct: smbv1Header,
+		WCT:               0x0c,
+		AndXCommand:       0xff,
+		Reserved1:         0x00,
+		AndXOffset:        0x0000,
+		MaxBuffer:         0xf000,
+		MaxMpxCount:       0x0002,
+		VCNumber:          0x0001,
+		SessionKey:        0x00000000,
+		Reserved2:         0x00000000,
+		Capabilities:      0x8000c004,
+		BCC:               0x004d,
+		NativeOS:          []byte{0x55, 0x6e, 0x69, 0x78, 0x00},
+		NativeLanManager:  []byte{0x53, 0x61, 0x6d, 0x62, 0x61, 0x00},
+		SecurityBlob:      &init,
+	}, nil
+}
 
 // 质询响应初始化
 //
@@ -175,68 +188,31 @@ func (c *Client) NegotiateProtocol() (err error) {
 		status, _ := ms.StatusMap[negRes.SMBV1PacketStruct.Status]
 		return errors.New(status)
 	}
-	// Check SPNEGO security blob
-	//spnegoOID, err := encoder.ObjectIDStrToInt(encoder.SpnegoOid)
-	//if err != nil {
-	//	c.Debug(err)
-	//	return err
-	//}
-	//oid := negRes.SecurityBlob.OID
-	//fmt.Println(oid)
-	// 检查是否存在ntlmssp
-	//hasNTLMSSP := false
-	//ntlmsspOID, err := gss.ObjectIDStrToInt(ntlm2.NTLMSSPMECHTYPEOID)
-	//if err != nil {
-	//	return err
-	//}
-	//for _, mechType := range negRes.SecurityBlob.Data.MechTypes {
-	//	if mechType.Equal(ntlmsspOID) {
-	//		hasNTLMSSP = true
-	//		break
-	//	}
-	//}
-	//if !hasNTLMSSP {
-	//	return errors.New("Server does not support NTLMSSP")
-	//}
-	//// 设置会话安全模式
-	//c.WithSecurityMode(negRes.SecurityMode)
-	//// 设置会话协议
-	//c.WithDialect(negRes.DialectRevision)
-	//// 签名开启/关闭
-	//mode := c.GetSecurityMode()
-	//if mode&smb.SecurityModeSigningEnabled > 0 {
-	//	if mode&smb.SecurityModeSigningRequired > 0 {
-	//		c.IsSigningRequired = true
-	//	} else {
-	//		c.IsSigningRequired = false
-	//	}
-	//} else {
-	//	c.IsSigningRequired = false
-	//}
+
 	// 第二步 发送质询
-	//c.Debug("Sending SessionSetup1 request", nil)
-	//ssreq, err := c.NewSessionSetupRequest()
-	//if err != nil {
-	//	c.Debug("", err)
-	//	return err
-	//}
+	c.Debug("Sending SessionSetup1 request", nil)
+	ssreq, err := c.NewSessionSetupRequest()
+	if err != nil {
+		c.Debug("", err)
+		return err
+	}
 	//ssres, err := NewSessionSetupResponse()
 	//if err != nil {
 	//	c.Debug("", err)
 	//	return err
 	//}
-	//buf, err = encoder.Marshal(ssreq)
-	//if err != nil {
-	//	c.Debug("", err)
-	//	return err
-	//}
-	//
-	//buf, err = c.SMBSend(ssreq)
-	//if err != nil {
-	//	c.Debug("Raw:\n"+hex.Dump(buf), err)
-	//	return err
-	//}
-	//
+	buf, err = encoder.Marshal(ssreq)
+	if err != nil {
+		c.Debug("", err)
+		return err
+	}
+
+	buf, err = c.SMBSend(ssreq)
+	c.Debug("Raw:\n"+hex.Dump(buf), err)
+	if err != nil {
+		return err
+	}
+
 	//c.Debug("Unmarshalling SessionSetup1 response", nil)
 	//if err = encoder.Unmarshal(buf, &ssres); err != nil {
 	//	c.Debug("", err)

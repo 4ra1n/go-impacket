@@ -45,7 +45,8 @@ const (
 )
 
 const (
-	SMBV1_NEGOTIATE = 0x72
+	SMBV1_NEGOTIATE          = 0x72
+	SMBV1_SESSION_SETUP_ANDX = 0x73
 )
 
 type SMBV1PacketStruct struct {
@@ -150,6 +151,25 @@ type SMB2NegotiateResponseStruct struct {
 	SecurityBufferLength uint16            `smb:"len:SecurityBlob"`    //2字节，安全缓冲区长度
 	Reserved2            uint32            //4字节，协商上下文偏移量
 	SecurityBlob         *gss.NegTokenInit //服务器返回二进制安全对象，遵循RFC2743标准
+}
+
+type SMBV1SessionSetupRequestStruct struct {
+	SMBV1PacketStruct
+	WCT                uint8
+	AndXCommand        uint8
+	Reserved1          uint8
+	AndXOffset         uint16
+	MaxBuffer          uint16
+	MaxMpxCount        uint16
+	VCNumber           uint16
+	SessionKey         uint32
+	SecurityBlobLength uint16 `smb:"len:SecurityBlob"`
+	Reserved2          uint32
+	Capabilities       uint32
+	BCC                uint16
+	SecurityBlob       *gss.NegTokenInit
+	NativeOS           []byte
+	NativeLanManager   []byte
 }
 
 // https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-smb2/5a3c2c28-d6b0-48ed-b917-a86b2ca4575f
