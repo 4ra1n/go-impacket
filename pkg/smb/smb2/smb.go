@@ -4,12 +4,12 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/Amzza0x00/go-impacket/pkg/common"
-	"github.com/Amzza0x00/go-impacket/pkg/encoder"
-	"github.com/Amzza0x00/go-impacket/pkg/krb5/gss"
-	ntlm2 "github.com/Amzza0x00/go-impacket/pkg/krb5/ntlm"
-	"github.com/Amzza0x00/go-impacket/pkg/ms"
-	"github.com/Amzza0x00/go-impacket/pkg/smb"
+	"github.com/4ra1n/go-impacket/pkg/common"
+	"github.com/4ra1n/go-impacket/pkg/encoder"
+	"github.com/4ra1n/go-impacket/pkg/krb5/gss"
+	ntlm2 "github.com/4ra1n/go-impacket/pkg/krb5/ntlm"
+	"github.com/4ra1n/go-impacket/pkg/ms"
+	"github.com/4ra1n/go-impacket/pkg/smb"
 	"net"
 )
 

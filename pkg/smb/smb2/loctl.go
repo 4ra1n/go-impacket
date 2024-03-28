@@ -2,8 +2,8 @@ package smb2
 
 import (
 	"encoding/hex"
-	"github.com/Amzza0x00/go-impacket/pkg/encoder"
-	"github.com/Amzza0x00/go-impacket/pkg/smb"
+	"github.com/4ra1n/go-impacket/pkg/encoder"
+	"github.com/4ra1n/go-impacket/pkg/smb"
 )
 
 // loctl/fsctl封装

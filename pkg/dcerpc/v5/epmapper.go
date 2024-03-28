@@ -2,9 +2,9 @@ package v5
 
 import (
 	"encoding/hex"
-	"github.com/Amzza0x00/go-impacket/pkg/encoder"
-	"github.com/Amzza0x00/go-impacket/pkg/ms"
-	"github.com/Amzza0x00/go-impacket/pkg/util"
+	"github.com/4ra1n/go-impacket/pkg/encoder"
+	"github.com/4ra1n/go-impacket/pkg/ms"
+	"github.com/4ra1n/go-impacket/pkg/util"
 )
 
 // 此文件提供epmapper rpc接口

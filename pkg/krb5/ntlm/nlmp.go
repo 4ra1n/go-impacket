@@ -11,7 +11,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/Amzza0x00/go-impacket/pkg/encoder"
+	"github.com/4ra1n/go-impacket/pkg/encoder"
 	"golang.org/x/crypto/md4"
 	"hash"
 	"strings"

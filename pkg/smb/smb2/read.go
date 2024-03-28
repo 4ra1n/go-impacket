@@ -3,9 +3,9 @@ package smb2
 import (
 	"encoding/hex"
 	"errors"
-	"github.com/Amzza0x00/go-impacket/pkg/encoder"
-	"github.com/Amzza0x00/go-impacket/pkg/ms"
-	"github.com/Amzza0x00/go-impacket/pkg/smb"
+	"github.com/4ra1n/go-impacket/pkg/encoder"
+	"github.com/4ra1n/go-impacket/pkg/ms"
+	"github.com/4ra1n/go-impacket/pkg/smb"
 )
 
 // 此文件用于smb2读数据请求

@@ -5,7 +5,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"github.com/Amzza0x00/go-impacket/pkg/util"
+	"github.com/4ra1n/go-impacket/pkg/util"
 	"reflect"
 	"strconv"
 	"strings"

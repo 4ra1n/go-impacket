@@ -3,9 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/Amzza0x00/go-impacket/pkg"
-	"github.com/Amzza0x00/go-impacket/pkg/common"
-	DCERPCv5 "github.com/Amzza0x00/go-impacket/pkg/dcerpc/v5"
+	"github.com/4ra1n/go-impacket/pkg"
+	"github.com/4ra1n/go-impacket/pkg/common"
+	DCERPCv5 "github.com/4ra1n/go-impacket/pkg/dcerpc/v5"
 	"log"
 )
 
