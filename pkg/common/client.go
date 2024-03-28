@@ -8,12 +8,13 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"errors"
-	"github.com/4ra1n/go-impacket/pkg/encoder"
 	"io"
 	"log"
 	"net"
 	"runtime/debug"
 	"time"
+
+	"github.com/4ra1n/go-impacket/pkg/encoder"
 )
 
 // 会话结构
@@ -51,46 +52,31 @@ func (c *Client) Debug(msg string, err error) {
 }
 
 func (c *Client) SMBSend(req interface{}) (res []byte, err error) {
-	buf, err := encoder.Marshal(req)
+	body, err := encoder.Marshal(req)
 	if err != nil {
 		c.Debug("", err)
 		return nil, err
 	}
-	b := new(bytes.Buffer)
-	if err = binary.Write(b, binary.BigEndian, uint32(len(buf))); err != nil {
-		c.Debug("", err)
-		return
-	}
-	c.Debug("Raw:\n"+hex.Dump(append(b.Bytes(), buf...)), nil)
-	rw := bufio.NewReadWriter(bufio.NewReader(c.conn), bufio.NewWriter(c.conn))
-	if _, err = rw.Write(append(b.Bytes(), buf...)); err != nil {
-		c.Debug("", err)
-		return
-	}
-	rw.Flush()
-	var size uint32
-	if err = binary.Read(rw, binary.BigEndian, &size); err != nil {
-		c.Debug("", err)
-		return
-	}
-	if size > 0x00FFFFFF {
-		return nil, errors.New("Invalid NetBIOS Session message")
-	}
-	data := make([]byte, size)
-	l, err := io.ReadFull(rw, data)
+	var buf []byte
+	temp := make([]byte, 4)
+	binary.BigEndian.PutUint32(temp, uint32(len(body)))
+	buf = append(temp)
+	buf = append(buf, body...)
+	c.Debug("raw:\n"+hex.Dump(buf), nil)
+
+	n, err := c.conn.Write(buf)
 	if err != nil {
-		c.Debug("", err)
 		return nil, err
 	}
-	if uint32(l) != size {
-		return nil, errors.New("Message size invalid")
+	if n != len(buf) {
+		return nil, errors.New("send smb error")
 	}
-	//protID := data[0:4]
-	//switch string(protID) {
-	//default:
-	//	return nil, errors.New("Protocol Not Implemented")
-	//case ProtocolSMB:
-	//}
+	respBuf := make([]byte, 1024*10)
+	n, err = c.conn.Read(respBuf)
+	if err != nil {
+		return nil, err
+	}
+	data := respBuf[:n]
 	c.messageId++
 	return data, nil
 }

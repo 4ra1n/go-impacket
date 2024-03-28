@@ -44,6 +44,25 @@ const (
 	SMB2_OPLOCK_BREAK    = 0x0012
 )
 
+const (
+	SMBV1_NEGOTIATE = 0x72
+)
+
+type SMBV1PacketStruct struct {
+	ProtocolId  []byte `smb:"fixed:4"`
+	Command     uint8
+	Status      uint32
+	Flags1      uint8
+	Flags2      uint16
+	ProcessHigh uint16
+	Signature   uint64
+	Reserved    uint16
+	TreeId      uint16
+	ProcessId   uint16
+	UserId      uint16
+	MultiplexId uint16
+}
+
 // SMB2标准头结构
 type SMB2PacketStruct struct {
 	ProtocolId            []byte `smb:"fixed:4"` //4字节，协议标识符，必须设置为 0x424D53FE
@@ -71,6 +90,15 @@ const (
 	SMB3_1_1_Dialect = 0x0311
 )
 
+type SMBV1NegotiateRequestStruct struct {
+	SMBV1PacketStruct
+	WCT          uint8
+	BCC          uint16
+	BufferFormat uint8
+	Name         []byte
+	End          uint8
+}
+
 // SMB2 Negotiate 请求头结构
 type SMB2NegotiateRequestStruct struct {
 	SMB2PacketStruct
@@ -82,6 +110,25 @@ type SMB2NegotiateRequestStruct struct {
 	ClientGuid      []byte   `smb:"fixed:16"` //16字节，客户端自身生成
 	ClientStartTime uint64   //8字节，保留字段，归零
 	Dialects        []uint16 //16位整数数组
+}
+
+type SMBV1NegotiateResponseStruct struct {
+	TotalLength uint32
+	SMBV1PacketStruct
+	WCT           uint8
+	SelectedIndex uint16
+	SecurityMode  uint8
+	MaxMpxCount   uint16
+	MaxVcs        uint16
+	MaxBufferSize uint32
+	MaxRawBuffer  uint32
+	SessionKey    uint32
+	Capabilities  uint32
+	SystemTime    uint64
+	ServerTime    uint16
+	ChallengeLen  uint8
+	BCC           uint16
+	ServerGUID    []byte `smb:"fixed:16"`
 }
 
 // https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-smb2/63abf97c-0d09-47e2-88d6-6bfa552949a5
