@@ -9,7 +9,7 @@ import (
 	"github.com/4ra1n/go-impacket/pkg/common"
 	"github.com/4ra1n/go-impacket/pkg/encoder"
 	"github.com/4ra1n/go-impacket/pkg/krb5/gss"
-	ntlm2 "github.com/4ra1n/go-impacket/pkg/krb5/ntlm"
+	"github.com/4ra1n/go-impacket/pkg/krb5/ntlm"
 	"github.com/4ra1n/go-impacket/pkg/ms"
 	"github.com/4ra1n/go-impacket/pkg/smb"
 )
@@ -49,7 +49,7 @@ func (c *Client) NewNegotiateRequest() smb.SMBV1NegotiateRequestStruct {
 	smbv1Header.Signature = 0
 	smbv1Header.Reserved = 0
 	smbv1Header.TreeId = 0xffff
-	smbv1Header.ProcessId = 0xcb98
+	smbv1Header.ProcessId = 0
 	smbv1Header.UserId = 0
 	smbv1Header.MultiplexId = 0
 	return smb.SMBV1NegotiateRequestStruct{
@@ -78,11 +78,11 @@ func (c *Client) NewSessionSetupRequest() (smb.SMBV1SessionSetupRequestStruct, e
 	smbv1Header.Signature = 0
 	smbv1Header.Reserved = 0
 	smbv1Header.TreeId = 0xffff
-	smbv1Header.ProcessId = 0xcb98
+	smbv1Header.ProcessId = 0
 	smbv1Header.UserId = 0
 	smbv1Header.MultiplexId = 0
 
-	ntlmsspneg := ntlm2.NewNegotiate(c.GetOptions().Domain, c.GetOptions().Workstation)
+	ntlmsspneg := ntlm.NewNegotiate(c.GetOptions().Domain, c.GetOptions().Workstation)
 	data, err := encoder.Marshal(ntlmsspneg)
 	if err != nil {
 		return smb.SMBV1SessionSetupRequestStruct{}, err
@@ -109,7 +109,7 @@ func (c *Client) NewSessionSetupRequest() (smb.SMBV1SessionSetupRequestStruct, e
 		VCNumber:          0x0001,
 		SessionKey:        0x00000000,
 		Reserved2:         0x00000000,
-		Capabilities:      0x8000c004,
+		Capabilities:      0x8000c044,
 		BCC:               0x004d,
 		NativeOS:          []byte{0x55, 0x6e, 0x69, 0x78, 0x00},
 		NativeLanManager:  []byte{0x53, 0x61, 0x6d, 0x62, 0x61, 0x00},
@@ -118,59 +118,19 @@ func (c *Client) NewSessionSetupRequest() (smb.SMBV1SessionSetupRequestStruct, e
 }
 
 // 质询响应初始化
-//
-//	func NewSessionSetupResponse() (smb.SMB2SessionSetupResponseStruct, error) {
-//		smb2Header := NewSMBPacket()
-//		resp, err := gss.NewNegTokenResp()
-//		if err != nil {
-//			return smb.SMB2SessionSetupResponseStruct{}, err
-//		}
-//		ret := smb.SMB2SessionSetupResponseStruct{
-//			SMB2PacketStruct: smb2Header,
-//			SecurityBlob:     &resp,
-//		}
-//		return ret, nil
-//	}
-//
-// // 认证请求初始化
-//
-//	func (c *Client) NewSessionSetup2Request() (smb.SMB2SessionSetup2RequestStruct, error) {
-//		smb2Header := NewSMBPacket()
-//		smb2Header.Command = smb.SMB2_SESSION_SETUP
-//		smb2Header.CreditCharge = 1
-//		smb2Header.MessageId = c.GetMessageId()
-//		smb2Header.SessionId = c.GetSessionId()
-//
-//		ntlmsspneg := ntlm2.NewNegotiate(c.GetOptions().Domain, c.GetOptions().Workstation)
-//		data, err := encoder.Marshal(ntlmsspneg)
-//		if err != nil {
-//			return smb.SMB2SessionSetup2RequestStruct{}, err
-//		}
-//
-//		if c.GetSessionId() == 0 {
-//			return smb.SMB2SessionSetup2RequestStruct{}, errors.New("Bad session ID for session setup 2 message")
-//		}
-//
-//		// Session setup request #2
-//		resp, err := gss.NewNegTokenResp()
-//		if err != nil {
-//			return smb.SMB2SessionSetup2RequestStruct{}, err
-//		}
-//		resp.ResponseToken = data
-//
-//		return smb.SMB2SessionSetup2RequestStruct{
-//			SMB2PacketStruct:     smb2Header,
-//			StructureSize:        25,
-//			Flags:                0x00,
-//			SecurityMode:         byte(smb.SecurityModeSigningEnabled),
-//			Capabilities:         0,
-//			Channel:              0,
-//			SecurityBufferOffset: 88,
-//			SecurityBufferLength: 0,
-//			PreviousSessionID:    0,
-//			SecurityBlob:         &resp,
-//		}, nil
-//	}
+func NewSessionSetupResponse() (smb.SMBV1SessionSetupResponseStruct, error) {
+	smbv1Header := NewSMBPacket()
+	resp, err := gss.NewNegTokenResp()
+	if err != nil {
+		return smb.SMBV1SessionSetupResponseStruct{}, err
+	}
+	ret := smb.SMBV1SessionSetupResponseStruct{
+		SMBV1PacketStruct: smbv1Header,
+		SecurityBlob:      &resp,
+	}
+	return ret, nil
+}
+
 func (c *Client) NegotiateProtocol() (err error) {
 	c.Debug("sending negotiate request", nil)
 	negReq := c.NewNegotiateRequest()
@@ -190,67 +150,72 @@ func (c *Client) NegotiateProtocol() (err error) {
 	}
 
 	// 第二步 发送质询
-	c.Debug("Sending SessionSetup1 request", nil)
+	c.Debug("sending session setup request", nil)
 	ssreq, err := c.NewSessionSetupRequest()
 	if err != nil {
 		c.Debug("", err)
 		return err
 	}
-	//ssres, err := NewSessionSetupResponse()
-	//if err != nil {
-	//	c.Debug("", err)
-	//	return err
-	//}
+	ssres, err := NewSessionSetupResponse()
+	if err != nil {
+		c.Debug("", err)
+		return err
+	}
 	buf, err = encoder.Marshal(ssreq)
 	if err != nil {
 		c.Debug("", err)
 		return err
 	}
-
+	c.Debug("client -> server \n"+hex.Dump(buf), err)
 	buf, err = c.SMBSend(ssreq)
-	c.Debug("Raw:\n"+hex.Dump(buf), err)
 	if err != nil {
 		return err
 	}
 
-	//c.Debug("Unmarshalling SessionSetup1 response", nil)
-	//if err = encoder.Unmarshal(buf, &ssres); err != nil {
-	//	c.Debug("", err)
-	//	return err
-	//}
-	//
-	//challenge := ntlm2.NewChallenge()
-	//resp := ssres.SecurityBlob
-	//if err = encoder.Unmarshal(resp.ResponseToken, &challenge); err != nil {
-	//	c.Debug("", err)
-	//	return err
-	//}
-	//
-	//if ssres.SMB2PacketStruct.Status != ms.STATUS_MORE_PROCESSING_REQUIRED {
-	//	status, _ := ms.StatusMap[negRes.SMB2PacketStruct.Status]
-	//	return errors.New(status)
-	//}
-	//c.WithSessionId(ssres.SMB2PacketStruct.SessionId)
-	//
-	//c.Debug("Sending SessionSetup2 request", nil)
-	//// 第三步 认证
-	//ss2req, err := c.NewSessionSetup2Request()
-	//if err != nil {
-	//	c.Debug("", err)
-	//	return err
-	//}
-	//
-	//var auth ntlm2.NTLMv2Authentication
-	//if c.GetOptions().Hash != "" {
-	//	// Hash present, use it for auth
-	//	c.Debug("Performing hash-based authentication", nil)
-	//	auth = ntlm2.NewAuthenticateHash(c.GetOptions().Domain, c.GetOptions().User, c.GetOptions().Workstation, c.GetOptions().Hash, challenge)
-	//} else {
-	//	// No hash, use password
-	//	c.Debug("Performing password-based authentication", nil)
-	//	auth = ntlm2.NewAuthenticatePass(c.GetOptions().Domain, c.GetOptions().User, c.GetOptions().Workstation, c.GetOptions().Password, challenge)
-	//}
-	//
+	ssres, err = NewSessionSetupResponse()
+	if err != nil {
+		c.Debug("", err)
+		return err
+	}
+	c.Debug("unmarshalling session setup response", nil)
+	if err = encoder.Unmarshal(buf, &ssres); err != nil {
+		c.Debug("", err)
+		return err
+	}
+
+	challenge := ntlm.NewChallenge()
+	resp := ssres.SecurityBlob
+	if err = encoder.Unmarshal(resp.ResponseToken, &challenge); err != nil {
+		c.Debug("", err)
+		return err
+	}
+
+	if ssres.SMBV1PacketStruct.Status != ms.STATUS_MORE_PROCESSING_REQUIRED {
+		status, _ := ms.StatusMap[negRes.SMBV1PacketStruct.Status]
+		return errors.New(status)
+	}
+
+	c.Debug("Sending SessionSetup2 request", nil)
+	// 第三步 认证
+	ss2req, err := c.NewSessionSetupRequest()
+	if err != nil {
+		c.Debug("", err)
+		return err
+	}
+
+	var auth ntlm.NTLMv2Authentication
+	if c.GetOptions().Hash != "" {
+		// Hash present, use it for auth
+		c.Debug("Performing hash-based authentication", nil)
+		auth = ntlm.NewAuthenticateHash(c.GetOptions().Domain, c.GetOptions().User, c.GetOptions().Workstation, c.GetOptions().Hash, challenge)
+	} else {
+		// No hash, use password
+		c.Debug("Performing password-based authentication", nil)
+		auth = ntlm.NewAuthenticatePass(c.GetOptions().Domain, c.GetOptions().User, c.GetOptions().Workstation, c.GetOptions().Password, challenge)
+	}
+	fmt.Println(ss2req)
+	fmt.Println(auth)
+
 	//responseToken, err := encoder.Marshal(auth)
 	//if err != nil {
 	//	c.Debug("", err)
@@ -299,12 +264,10 @@ func NewSession(opt common.ClientOptions, debug bool) (client *Client, err error
 	client.WithOptions(&opt)
 	client.WithConn(conn)
 	client.WithDebug(debug)
-
 	err = client.NegotiateProtocol()
 	if err != nil {
 		return
 	}
-
 	return client, nil
 }
 

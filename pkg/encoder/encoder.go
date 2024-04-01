@@ -5,11 +5,12 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"github.com/4ra1n/go-impacket/pkg/util"
 	"reflect"
 	"strconv"
 	"strings"
 	"unicode/utf16"
+
+	"github.com/4ra1n/go-impacket/pkg/util"
 )
 
 func ToUnicode(s string) []byte {
@@ -78,6 +79,8 @@ func parseTags(sf reflect.StructField) (*TagMap, error) {
 	for _, smbTag := range smbTags {
 		tokens := strings.Split(smbTag, ":")
 		switch tokens[0] {
+		case "ignore":
+			ret.Set(tokens[0], tokens[1])
 		case "len", "offset":
 			if len(tokens) != 2 {
 				return nil, errors.New("Missing required tag data. Expecting key:val")
@@ -555,6 +558,10 @@ func unmarshal(buf []byte, v interface{}, meta *Metadata) (interface{}, error) {
 			var count, value, tagValue, minLen uint64
 			var length, offset int
 			var err error
+			// ignored
+			if meta.Tags.Has("ignore") {
+				return []byte{}, nil
+			}
 			if meta.Tags.Has("fixed") {
 				if length, err = meta.Tags.GetInt("fixed"); err != nil {
 					return nil, err
@@ -685,6 +692,8 @@ func unmarshal(buf []byte, v interface{}, meta *Metadata) (interface{}, error) {
 				// 在循环结束后返回完整解析的切片
 				return sliceValue.Interface(), nil
 			}
+		default:
+			panic("unhandled default case")
 		}
 	default:
 		return errors.New("Unmarshal not implemented for kind:" + typev.Kind().String()), nil

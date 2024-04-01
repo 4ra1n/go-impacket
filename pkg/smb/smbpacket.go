@@ -189,6 +189,23 @@ type SMB2SessionSetupRequestStruct struct {
 
 // https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-smb2/0324190f-a31b-4666-9fa9-5c624273a694
 // 质询响应结构体
+type SMBV1SessionSetupResponseStruct struct {
+	TotalLen uint32
+	SMBV1PacketStruct
+	WCT                uint8
+	AndXCommand        uint8
+	Reserved1          uint8
+	AndXOffset         uint16
+	Action             uint16
+	SecurityBlobLength uint16 `smb:"len:SecurityBlob"`
+	BCC                uint16
+	SecurityBlob       *gss.NegTokenResp
+	NativeOS           []byte `smb:"ignore:true"`
+	NativeLanManager   []byte `smb:"ignore:true"`
+}
+
+// https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-smb2/0324190f-a31b-4666-9fa9-5c624273a694
+// 质询响应结构体
 type SMB2SessionSetupResponseStruct struct {
 	SMB2PacketStruct
 	StructureSize        uint16

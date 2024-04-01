@@ -11,10 +11,12 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/4ra1n/go-impacket/pkg/encoder"
-	"golang.org/x/crypto/md4"
 	"hash"
 	"strings"
+
+	"golang.org/x/crypto/md4"
+
+	"github.com/4ra1n/go-impacket/pkg/encoder"
 )
 
 // ssp安全签名
@@ -220,10 +222,10 @@ type Negotiate struct {
 	NegotiateFlags          uint32
 	DomainNameLen           uint16 `smb:"len:DomainName"`
 	DomainNameMaxLen        uint16 `smb:"len:DomainName"`
-	DomainNameBufferOffset  uint32 `smb:"offset:DomainName"`
+	DomainNameBufferOffset  uint32 `smb:"len:DomainName"`
 	WorkstationLen          uint16 `smb:"len:Workstation"`
 	WorkstationMaxLen       uint16 `smb:"len:Workstation"`
-	WorkstationBufferOffset uint32 `smb:"offset:Workstation"`
+	WorkstationBufferOffset uint32 `smb:"len:Workstation"`
 	DomainName              []byte
 	Workstation             []byte
 }

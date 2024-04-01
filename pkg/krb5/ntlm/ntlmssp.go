@@ -8,9 +8,10 @@ import (
 	"crypto/md5"
 	"crypto/rand"
 	"encoding/binary"
-	"github.com/4ra1n/go-impacket/pkg/encoder"
 	"hash"
 	"time"
+
+	"github.com/4ra1n/go-impacket/pkg/encoder"
 )
 
 // 协商版本
@@ -24,7 +25,7 @@ func NewNegotiate(domainName, workstation string) Negotiate {
 			FlgNeg128 |
 			FlgNegTargetInfo |
 			FlgNegExtendedSecurity |
-			FlgNegOEMDomainSupplied |
+			//FlgNegOEMDomainSupplied |
 			FlgNegNTLMKey |
 			FlgRequestTarget |
 			FlgNegUNICODE,

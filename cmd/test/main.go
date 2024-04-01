@@ -10,12 +10,13 @@ import (
 func main() {
 	port := 445
 	options := common.ClientOptions{
-		Host:     "192.168.197.158",
-		Port:     port,
-		Domain:   "test",
-		User:     "administrator",
-		Password: "administrator",
-		Hash:     "",
+		Host:        "192.168.197.158",
+		Port:        port,
+		Domain:      "",
+		Workstation: "",
+		Hash:        "",
+		User:        "administrator",
+		Password:    "administrator",
 	}
 	session, err := smbv1.NewSession(options, true)
 	if err != nil {

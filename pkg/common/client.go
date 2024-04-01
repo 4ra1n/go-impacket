@@ -62,17 +62,20 @@ func (c *Client) SMBSend(req interface{}) (res []byte, err error) {
 	binary.BigEndian.PutUint32(temp, uint32(len(body)))
 	buf = append(temp)
 	buf = append(buf, body...)
-	c.Debug("raw:\n"+hex.Dump(buf), nil)
 
+	c.Debug("raw:\n"+hex.Dump(buf), nil)
 	n, err := c.conn.Write(buf)
+
 	if err != nil {
 		return nil, err
 	}
 	if n != len(buf) {
 		return nil, errors.New("send smb error")
 	}
+
 	respBuf := make([]byte, 1024*10)
 	n, err = c.conn.Read(respBuf)
+
 	if err != nil {
 		return nil, err
 	}
